@@ -28,3 +28,7 @@ class SlavesWorkSettings(bpy.types.PropertyGroup):
             subtype='FACTOR')
 
         bpy.types.Scene.slaves_work_settings = PointerProperty(type=SlavesWorkSettings, name="Slave's Work Settings", description="Settings for using the Slave's Work service")
+
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Scene.bitwrk_settings
