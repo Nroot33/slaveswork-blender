@@ -2,7 +2,7 @@ import bpy
 
 class SlavesWorkPanel(bpy.types.Panel):
     bl_idname = "slaves_work_Panel"
-    bl_label = "test22222"
+    bl_label = "Slave's Work"
     bl_category = "Test Addon"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -12,7 +12,7 @@ class SlavesWorkPanel(bpy.types.Panel):
         # check = isOpenSlavesWork()
         self.layout.separator()
         
-        self.layout.label(text="Slaves's work not working",icon='ERROR')
+        self.layout.label(text="Slaves's work is not working",icon='ERROR')
         row = self.layout.row(align=True)
         row.operator("slaves_work.render", text='Render', icon='PLAY')
         row.operator("slaves_work.stop", icon='X')
