@@ -1,13 +1,19 @@
 import bpy
+from . import slaveswork
 
-class SlavesWorkPanel(bpy.types.Panel):
-    bl_idname = "slaves_work_Panel"
+class SlavesWork_PT_Panel(bpy.types.Panel):
+    bl_idname = "slaves_work_PT_Panel"
     bl_label = "Slave's Work"
-    bl_category = "Test Addon"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "render"
+    COMPAT_ENGINES = {"SLAVES_WORK_RENDER"}
 
+    # @classmethod
+    # def poll(cls, context):
+    #     rd = context.scene.render
+    #     return rd.engine == 'SLAVES_WORK_RENDER'
+    
     def draw(self, context):
         settings = context.scene.slaves_work_settings
         self.layout.label(text="Slaves's work Checker",icon='INFO')
@@ -36,7 +42,8 @@ class RenderSlavesWorkOperator(bpy.types.Operator):
    
     @classmethod
     def poll(cls, context):
-        return True
+        settings = context.scene.slaves_work_settings
+        return settings.slaves_work_app_running
     
     def execute(self, context):
         print("Render")
@@ -49,7 +56,8 @@ class StopSlavesWorkOperator(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        return False
+        settings = context.scene.slaves_work_settings
+        return settings.slaves_work_app_running and False
     
     def execute(self, context):
         print("Stop")
@@ -62,4 +70,6 @@ class SlavesWorkChecker(bpy.types.Operator):
     
     def execute(self, context):
         print("Checker")
+        settings = context.scene.slaves_work_settings
+        slaveswork.check_running(settings)
         return {'FINISHED'}

@@ -9,7 +9,7 @@ class SlavesWorkSettings(bpy.types.PropertyGroup):
             name="Slave's Work Host Ip",
             description="IP or name of host running local Slaves Work Host",
             maxlen=180,
-            default="localhost")
+            default="127.0.0.1")
 
         settings.slaves_work_port = IntProperty(
             name="Slave's Work Host Port",
@@ -27,8 +27,13 @@ class SlavesWorkSettings(bpy.types.PropertyGroup):
             precision=2,
             subtype='FACTOR')
 
+        settings.slaves_work_app_running = BoolProperty(
+            name="Slave's Work running check",
+            description="check slaves work app is running",
+            default=False)
+
         bpy.types.Scene.slaves_work_settings = PointerProperty(type=SlavesWorkSettings, name="Slave's Work Settings", description="Settings for using the Slave's Work service")
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Scene.bitwrk_settings
+        del bpy.types.Scene.slaves_work_settings
