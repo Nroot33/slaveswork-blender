@@ -2,17 +2,17 @@ import bpy
 from . import slaveswork
 
 class SlavesWork_PT_Panel(bpy.types.Panel):
-    bl_idname = "slaves_work_PT_Panel"
+    bl_idname = "SLAVES_WORK_PT_Panel"
     bl_label = "Slave's Work"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "render"
     COMPAT_ENGINES = {"SLAVES_WORK_RENDER"}
 
-    # @classmethod
-    # def poll(cls, context):
-    #     rd = context.scene.render
-    #     return rd.engine == 'SLAVES_WORK_RENDER'
+    @classmethod
+    def poll(cls, context):
+        rd = context.scene.render
+        return rd.engine == 'SLAVES_WORK_RENDER'
     
     def draw(self, context):
         settings = context.scene.slaves_work_settings
@@ -47,7 +47,11 @@ class RenderSlavesWorkOperator(bpy.types.Operator):
     
     def execute(self, context):
         print("Render")
-        return {'FINISHED'}
+    #     return {"RUNNING_MODAL"}
+    #
+    # def modal(self, context, event):
+    #     bpy.ops.render.render("INVOKE_DEFAULT", write_still=True)
+    #     return {"PASS_THROUGH"}
     
 class StopSlavesWorkOperator(bpy.types.Operator):
     """Slave's Work Rendering Stop"""
