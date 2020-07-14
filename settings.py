@@ -14,7 +14,7 @@ class SlavesWorkSettings(bpy.types.PropertyGroup):
         settings.slaves_work_port = IntProperty(
             name="Slave's Work Host Port",
             description="TCP port the local Slave's Work Host listens on",
-            default=8081,
+            default=8080,
             min=1,
             max=65535)
 

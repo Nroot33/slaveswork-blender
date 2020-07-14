@@ -161,13 +161,13 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         # 1. 커넥션을 맺는다.
         # 2. 파일 정보를 app에 전송한다.
         # 3. 결과를 돌려받으면 break;
-        host = "localhost"
-        port = 8080
+        host = settings.slaves_work_host
+        port = settings.slaves_work_port
 
         print("filename: ", filename)
 
-        self.sendTiles("POST", "/", tiles, host, port)
-        self.sendResources("POST", "/", filename, host, port)
+        self.sendTiles("POST", "/task/tiles", tiles, host, port)
+        self.sendResources("POST", "/task/resource", filename, host, port)
 
         for tile in tiles:
             tile.previewDrawing(self)
