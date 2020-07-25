@@ -26,51 +26,16 @@ class Tile:
         tile = engine.begin_result(self.minx, self.miny, self.resx, self.resy)
         tile.layers[0].passes[0].rect = [self.color] * (self.resx*self.resy)
         engine.end_result(tile)
+
+        self.result = engine.begin_result(self.minx, self.miny, self.resx, self.resy)
+        return
+    def rendering(self, engine, filename):
+        self.result.layers[0].load_from_file(filename)
+        engine.end_result(self.result)
         return
 
     def setIndex(self, index):
         self.index = index
-
-    # def dispatch(self, settings, data, filepath, engine):
-    #     """Dispatches one tile to the bitwrk client.
-    #     The complete blender data is packed into the transmission.
-    #     """
-    #     # draw rect in preview color
-    #     tile = engine.begin_result(self.minx, self.miny, self.resx, self.resy)
-    #     tile.layers[0].passes[0].rect = [self.color] * (self.resx*self.resy)
-    #     engine.end_result(tile)
-
-    #     self.result = engine.begin_result(self.minx, self.miny, self.resx, self.resy)
-    #     self.conn = http.client.HTTPConnection(
-    #         "localhost", 8080,
-    #         timeout=600)
-    #     try:
-    #         self.conn.putrequest("POST", "/buy/")
-    #         self.conn.putheader('Transfer-Encoding', 'chunked')
-    #         self.conn.endheaders()
-    #         chunk = chunked.Chunked(self.conn)
-    #         try:
-    #             chunk.writeInt('xmin', self.minx)
-    #             chunk.writeInt('ymin', self.miny)
-    #             chunk.writeInt('xmax', self.minx+self.resx-1)
-    #             chunk.writeInt('ymax', self.miny+self.resy-1)
-    #             chunk.writeInt('fram', self.frame)
-    #             chunk.bundleResources(engine, bpy.data)
-    #             with open(filepath, "rb") as file:
-    #                 chunk.writeFile('blen', file)
-    #         finally:
-    #             chunk.close()
-    #     except:
-    #         print("Exception in dispatch:", sys.exc_info())
-    #         engine.report({'ERROR'}, "Exception in dispatch: {}".format(traceback.format_exc()))
-    #         self.conn.close()
-    #         self.conn = None
-    #         self.result.layers[0].passes[0].rect = [[1,0,0,1]] * (self.resx*self.resy)
-    #         engine.end_result(self.result)
-    #         self.result = None
-    #         return False
-    #     else:
-    #         return True
 
     def collect(self, settings, engine, is_multilayer):
         # TODO
@@ -172,6 +137,10 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         for tile in tiles:
             tile.previewDrawing(self)
 
+        # filename = "C:\\Users\\Joengjun\\go\\src\\github.com\\slaveswork\\slaveswork-prototype\\render\\0_0_640_0_1279.exr"
+        
+        # for tile in tiles:
+            # tile.rendering(self, filename)
         # num_active = 0
         # while not self.test_break():
         #     remaining = [t for t in tiles if not t.success]
@@ -244,8 +213,8 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         jsonTiles = []
         for index in range(len(tiles)):
             tiles[index].setIndex(index)
-            jsonTiles.append({'index': index, 'xmin': tiles[index].minx, 'ymin': tiles[index].miny, 'xmax': tiles[index].minx +
-                              tiles[index].resx-1, 'ymax': tiles[index].miny + tiles[index].resy-1, 'fram': tiles[index].frame})
+            jsonTiles.append({'index': str(index), 'xmin': str(tiles[index].minx), 'ymin': str(tiles[index].miny),
+                              'xmax': str(tiles[index].minx + tiles[index].resx-1), 'ymax': str(tiles[index].miny + tiles[index].resy-1), 'fram': str(tiles[index].frame)})
         jsonTiles = json.dumps(jsonTiles)
 
         try:

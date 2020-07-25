@@ -1,4 +1,7 @@
-import bpy, subprocess, sys, traceback
+import bpy
+import subprocess
+import sys
+import traceback
 from . import resources
 
 def save_copy(filepath):
