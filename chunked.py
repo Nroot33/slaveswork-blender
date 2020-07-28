@@ -106,7 +106,6 @@ class Chunked:
                         file = io.BytesIO(obj.packed_file.data)
                     else:
                         path = resources.object_filepath(obj)
-                        print("resources path : ", path)
                         if path:
                             file = open(path, "rb")
                         else:
