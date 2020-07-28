@@ -5,10 +5,11 @@ import os
 import traceback
 import http.client
 import json
+import http.server
+import socketserver
 
 # import sys
 from . import common, tiling, chunked, blendfile
-
 
 class Tile:
     def __init__(self, frame, minx, miny, resx, resy, color):
@@ -29,9 +30,12 @@ class Tile:
 
         self.result = engine.begin_result(self.minx, self.miny, self.resx, self.resy)
         return
+
     def rendering(self, engine, filename):
         self.result.layers[0].load_from_file(filename)
         engine.end_result(self.result)
+
+        self.success = True
         return
 
     def setIndex(self, index):
@@ -62,7 +66,8 @@ class Tile:
 
 
 _render_count = 0
-
+global_tiles = []
+global_engine = None
 
 def is_render_active():
     global _render_count
@@ -81,12 +86,6 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         global _render_count
         _render_count += 1
         try:
-            # if not hasattr(scene, 'bitwrk_settings'):
-            #     self.report({'ERROR'}, "Must first setup BitWrk")
-            #     return
-            # if not probe_bitwrk_client(scene.bitwrk_settings):
-            #     self.report({'ERROR'}, "Must first connect to BitWrk client")
-            #     return
             with tempfile.TemporaryDirectory() as tmpdir:
                 self._doRender(scene, tmpdir)
         except:
@@ -96,6 +95,9 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
             _render_count -= 1
 
     def _doRender(self, scene, tmpdir):
+        global global_engine
+        global global_tiles
+        global_engine = self
         filename = os.path.join(tmpdir, "mainfile.blend")
         blendfile.save_copy(filename)
         blendfile.process_file(filename)
@@ -110,17 +112,11 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         tiles = self._makeTiles(scene.frame_current,
                                 resx, resy, max_pixels_per_tile)
 
-        # a = bpy.app.binary_path_python
-        # print("python_path : ", a)
-        # b = bpy.app.binary_path
-        # print("blender : ", b)
-        # c = os.path.join(os.path.abspath(os.path.dirname(__file__)), "blender-slave.py")
-        # print("worker_path : ", c)
-
         # Sort by distance to center
         tiles.sort(key=lambda t: abs(t.minx + t.resx/2 - resx/2) +
                    abs(t.miny + t.resy/2 - resy/2))
-
+        global_tiles = tiles
+        
         settings = scene.slaves_work_settings
 
         # 1. 커넥션을 맺는다.
@@ -137,45 +133,15 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
         for tile in tiles:
             tile.previewDrawing(self)
 
-        # filename = "C:\\Users\\Joengjun\\go\\src\\github.com\\slaveswork\\slaveswork-prototype\\render\\0_0_640_0_1279.exr"
-        
-        # for tile in tiles:
-            # tile.rendering(self, filename)
-        # num_active = 0
-        # while not self.test_break():
-        #     remaining = [t for t in tiles if not t.success]
-        #     if not remaining:
-        #         self.report({'INFO'}, "Successfully render Done {} ".format(len(tiles)))
-        #         break
+        # 4. tcp 서버를 열고 데이터를 받는다.  
+        server_address = ("", 8000)
+        handler = MyHandler
 
-        #     # Dispatch some unfinished tiles
-        #     for tile in remaining:
-        #         if tile.conn is None and num_active < 4:
-        #             if tile.dispatch(settings, bpy.data, filename, self):
-        #                 num_active += 1
+        with socketserver.TCPServer(server_address, handler) as httpd:
+            print("serving at port", 8000)
+            httpd.serve_forever()
 
-            # Poll from all tiles currently active
-            # active = filter(lambda tile: tile.conn is not None, tiles)
-            # rlist, wlist, xlist = select.select(active, [], active, 2.0)
-
-            # Collect from all tiles where data has arrived
-            # for list in rlist, xlist:
-            #     for tile in list:
-            #         if tile.conn is not None:
-            #             tile.collect(settings, self, is_multilayer)
-            #             # collect has either failed or not. In any case, the tile is
-            #             # no longer active.
-            #             num_active -= 1
-
-            # Report status
-        #     successful = 0
-        #     for tile in tiles:
-        #         if tile.success:
-        #             successful += 1
-        #     self.update_progress(successful / len(tiles))
-        # if self.test_break():
-        #     for tile in filter(lambda tile: tile.conn is not None, tiles):
-        #         tile.cancel()
+        print("rendering DONE!!!!!")
 
     angle = 0.0
 
@@ -246,3 +212,33 @@ class SlavesWorkRenderEngine(bpy.types.RenderEngine):
             self.report({'ERROR'}, "Exception in sending Resources : {}".format(
                 traceback.format_exc()))
             conn.close()
+
+class MyHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        # self.rfile is a file-like object created by the handler;
+        # we can now use e.g. readline() instead of raw recv() calls
+    
+        if self.checkDone(): self.server.shutdonw()
+       
+        path = None
+        index = None
+
+        headers = self.headers.items()
+        for name, value in headers:
+            if name == 'Index':
+                index = int(value)
+            if name == 'Filename':
+                path = value
+            print(name + " : " + value)
+        print("do_get ", path)
+
+        global_tiles[index].rendering(global_engine, path)
+
+        self.send_response(200)
+        self.end_headers()
+        
+    def checkDone(self):
+        for tile in global_tiles:
+            if tile.success != True:
+                return False 
+        return True
